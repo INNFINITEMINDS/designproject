@@ -7,10 +7,11 @@ clips_src = '../clips/'
 # data, freq, channels, latency = get_contents_at_index(ictal_contents, 3)
 def get_contents_at_index(contents, index):
 	# Skipping the out of bounds check.
-	data = contents[index]['data']
-	freq = contents[index]['freq']
-	channels = contents[index]['channels']
-	latency = contents[index]['latency']
+
+	data = contents[index].get('data')
+	freq = contents[index].get('freq')
+	channels = contents[index].get('channels')
+	latency = contents[index].get('latency')
 	return data, freq, channels, latency
 
 def load_all_for_arr(fld_src, mat_src):
