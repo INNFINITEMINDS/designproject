@@ -1,50 +1,38 @@
-from utils import *
+from util import *
+from features import *
 from sklearn.metrics import roc_auc_score
 
-def validationProbs(forestList,testDF):
-    output = []
-    for forest in forestList:
-        output.append(forest.predict_proba(testDF.values[:,0:-3])[:,1])
-    output = np.array(output).T
-    return output
+#Method to generate ROC curves
+def testAUC(svmParamList,testData):
 
-dataSelector = [['Patient_8',0.5,0.5]]
-                
-predictions = []; validations = []; testSamples = pd.DataFrame()
+#Sample value 
+dataSelector = [['Patient_1',0.5,0.5]]
                 
 for num, dataSet in enumerate(dataSelector):
-    #print dataSet, num + 1
-    print "Loading train/validation samples using selector:\n",dataSelector[num] 
-    print "(lat, freq, trees) = ", (18, 100,1000)
-    samples = loadTrainAndValidationSamples([dataSet],['allFeats'],100.0)
+    print "Loading train,validation samples:\n",dataSelector[num] 
+    features = getAllFeatures();
+    #TODO: integrate loadTrainAndValData with load_for_patient
+    samples = loadTrainAndValData([dataSet],features,)
     print "Training sample size: ",samples['train'].shape
     print "Validation sample size: ",samples['validation'].shape
     print "Training..."
-    forest = trainDoubleForest(samples['train'])
-    print "Done training. Making Predictions..."
+    svmScore = trainSVM(samples['train'])
+    print "Done training. Making Classifications..."
 
-    testSam = samples['validation'] 
-    testSamples = pd.concat([testSamples, testSam])    
-    #print "Test sample size: ",testSam.shape
+    testSample = samples['validation'] 
+    testSamples = pd.concat([testSamples, testSample])    
+    print "Test sample size: ",testSample.shape
     
-    col = len(testSam.columns)
-    row = len(testSam)
-    predictions = validationProbs([forest['seizure'],forest['early']],testSam)
-    validations = testSam.values[:, col-2:col]
-    for i in range(0,row):
-        if testSam.values[i,-1] > 0 and testSam.values[i,-3] > 15:
-           validations[i,1] = 0 
-    #above is needed to ensure that validations use the correct lat < 16       
+    #TODO: Run model against test samples
+    #Generate classification results     
     
-    seizureAUC = roc_auc_score(validations[:,0], predictions[:,0])
-    earlyAUC = roc_auc_score(validations[:,1], predictions[:,1])
-    averageAUC = (0.5)*(seizureAUC + earlyAUC)
+    seizureAUC = roc_auc_score(true_labels, target_scores)
+    nonSeizureAUC = roc_auc_score(false_labels, target_scores)
+    averageAUC = (seizureAUC + nonSeizureAUC) / 2
     
+    #TODO: Plotting functions to generate curves
     
     print "Seizure AUC: ", seizureAUC
-    print "Early AUC: ", earlyAUC
+    print "Non Seizure AUC: ", nonSeizureAUC
     print "Average AUC: ", averageAUC
-   
-#makeSubmit(np.array(predictions), testSamples)
-
-#print "Done."
+    print "Done."
