@@ -10,18 +10,22 @@ def nn_setup():
     net = ps.FeedForwardNetwork()
 
     inputLayer = ps.LinearLayer(68)
-    hiddenLayer = ps.SigmoidLayer(34)
+    hiddenLayer1 = ps.SigmoidLayer(34)
+    hiddenLayer2 = ps.SigmoidLayer(34)
     outputLayer = ps.LinearLayer(1)
 
-    input_to_hidden = ps.FullConnection(inputLayer, hiddenLayer)
-    hidden_to_output = ps.FullConnection(hiddenLayer, outputLayer)
+    input_to_hidden = ps.FullConnection(inputLayer, hiddenLayer1)
+    hidden_to_hidden = ps.FullConnection(hiddenLayer1, hiddenLayer2)
+    hidden_to_output = ps.FullConnection(hiddenLayer2, outputLayer)
 
     # Add input, hidden and output layers and connections
     net.addInputModule(inputLayer)
-    net.addModule(hiddenLayer)
+    net.addModule(hiddenLayer1)
+    net.addModule(hiddenLayer2)
     net.addOutputModule(outputLayer)
 
     net.addConnection(input_to_hidden)
+    net.addConnection(hidden_to_hidden)
     net.addConnection(hidden_to_output)
 
     # Initialize NN
@@ -29,26 +33,33 @@ def nn_setup():
     return net
 
 
-def nn():
-    dataSource = "../clips/other"
+def main():
+    data_source = "../clips"
 
-    ictal_data, interictal_data, test_data = load_for_patient(dataSource)
+    ictal_data = np.zeros((30, 68, 500))
+    interictal_data = np.zeros((30, 68, 500))
 
-    ictal = np.asarray(ictal_data)
-    interictal = np.asarray(interictal_data)
+    ictal_files, interictal_files, test_files = load_for_patient(data_source)
 
-    ictal_data = np.split(ictal, 3)
-    interictal_data = np.split(interictal, 3)
+    for index in range(0, len(ictal_files)):
+        ictal_data[index], ictal_freq, ictal_channels, ictal_latency = get_contents_at_index(ictal_files, index)
 
-    train_data = np.vstack([ictal_data[0], interictal_data[0]])
-    valid_data = np.vstack([ictal_data[1], interictal_data[1]])
-    test_data = np.vstack([ictal_data[2], interictal_data[2]])
+    for index in range(0, len(interictal_files)):
+        interictal_data[index], interictal_freq, interictal_channels, interictal_latency = get_contents_at_index(
+            interictal_files, index)
 
-    ntrain = train_data.size
-    nvalid = valid_data.size
-    ntest = test_data.size
+    ictal = np.split(ictal_data, 3)
+    interictal = np.split(interictal_data, 3)
 
+    train_data = np.reshape(np.vstack([ictal[0], ictal[1], interictal[0], interictal[1]]), (20000, 68))
+    valid_data = np.reshape(np.vstack([ictal[2], interictal[2]]), (10000, 68))
+
+    ntrain = train_data.shape[0]
+    nvalid = valid_data.shape[0]
+
+    print "Generating training dataset"
     train_dataset = pd.SupervisedDataSet(68, 1)
+    valid_dataset = pd.ClassificationDataSet(68, 1)
 
     for index in range(ntrain):
         if index < ntrain / 2:
@@ -58,8 +69,28 @@ def nn():
 
     net = nn_setup()
 
+    print("Training network on given data")
     trainer = BackpropTrainer(net, train_dataset)
 
-    err = trainer.train()
+    train_error = trainer.train()
 
-    print "Error: %f" % err
+    print "Training error: %f" % train_error
+
+    print "Generating validation dataset"
+
+    for index in range(nvalid):
+        if index < ntrain / 2:
+            valid_dataset.addSample(valid_data[index], 1)
+        else:
+            valid_dataset.addSample(valid_data[index], 0)
+
+    print "Classifying validation data"
+    output = np.round(np.concatenate(net.activateOnDataset(valid_dataset)))
+    labels = np.append(np.ones(5000), np.zeros(5000))
+
+    valid_error = (nvalid - sum(np.equal(output, labels)))/float(nvalid)
+    print "Validation error: %f" % valid_error
+
+
+if __name__ == '__main__':
+    main()
