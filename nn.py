@@ -10,23 +10,27 @@ def nn_setup():
     net = ps.FeedForwardNetwork()
 
     inputLayer = ps.LinearLayer(68)
-    hiddenLayer1 = ps.SigmoidLayer(34)
+    hiddenLayer1 = ps.SigmoidLayer(10)
     hiddenLayer2 = ps.SigmoidLayer(34)
+    hiddenLayer3 = ps.SigmoidLayer(10)
     outputLayer = ps.LinearLayer(1)
 
     input_to_hidden = ps.FullConnection(inputLayer, hiddenLayer1)
-    hidden_to_hidden = ps.FullConnection(hiddenLayer1, hiddenLayer2)
-    hidden_to_output = ps.FullConnection(hiddenLayer2, outputLayer)
+    hidden1_to_hidden2 = ps.FullConnection(hiddenLayer1, hiddenLayer2)
+    hidden2_to_hidden3 = ps.FullConnection(hiddenLayer2, hiddenLayer3)
+    hidden3_to_output = ps.FullConnection(hiddenLayer2, outputLayer)
 
     # Add input, hidden and output layers and connections
     net.addInputModule(inputLayer)
     net.addModule(hiddenLayer1)
     net.addModule(hiddenLayer2)
+    net.addModule(hiddenLayer3)
     net.addOutputModule(outputLayer)
 
     net.addConnection(input_to_hidden)
-    net.addConnection(hidden_to_hidden)
-    net.addConnection(hidden_to_output)
+    net.addConnection(hidden1_to_hidden2)
+    net.addConnection(hidden2_to_hidden3)
+    net.addConnection(hidden3_to_output)
 
     # Initialize NN
     net.sortModules()
@@ -34,7 +38,7 @@ def nn_setup():
 
 
 def main():
-    data_source = "../clips"
+    data_source = "../shared_dir/filtered_data/Patient_1/"
 
     ictal_data = np.zeros((30, 68, 500))
     interictal_data = np.zeros((30, 68, 500))
@@ -57,7 +61,7 @@ def main():
     ntrain = train_data.shape[0]
     nvalid = valid_data.shape[0]
 
-    print "Generating training dataset"
+    print "Generating training dataset from files at %s." % data_source
     train_dataset = pd.SupervisedDataSet(68, 1)
     valid_dataset = pd.ClassificationDataSet(68, 1)
 
@@ -71,10 +75,12 @@ def main():
 
     print("Training network on given data")
     trainer = BackpropTrainer(net, train_dataset)
+    train_error = 1.0
+    while train_error > 0.05:
+        train_error = trainer.train()
+        print "Training error: %f" % train_error
 
-    train_error = trainer.train()
-
-    print "Training error: %f" % train_error
+    # print "Training error: %f" % train_error
 
     print "Generating validation dataset"
 
