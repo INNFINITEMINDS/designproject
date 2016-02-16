@@ -38,22 +38,17 @@ def nn_setup():
 
 
 def main():
-    data_source = "../shared_dir/kaggle_data/clips/Patient_1/"
+    data_source = "../shared_dir/kaggle_data/Patient_1/"
 
     ictal_data = np.zeros((30, 68, 500))
     interictal_data = np.zeros((30, 68, 500))
 
-    print "Loading data files from files at %s" % data_source
     ictal_files, interictal_files, test_files = load_for_patient(data_source)
-    print np.array(ictal_files).shape
-    print np.array(interictal_files).shape
-    for index in range(0, len(ictal_files)-1):
-        # print len(interictal_files)
-        print index
+
+    for index in range(0, len(ictal_files)):
         ictal_data[index], ictal_freq, ictal_channels, ictal_latency = get_contents_at_index(ictal_files, index)
-    for index in range(0, len(interictal_files)-1):
-        # print len(interictal_files)
-        print index
+
+    for index in range(0, len(interictal_files)):
         interictal_data[index], interictal_freq, interictal_channels, interictal_latency = get_contents_at_index(
             interictal_files, index)
 
@@ -66,7 +61,7 @@ def main():
     ntrain = train_data.shape[0]
     nvalid = valid_data.shape[0]
 
-    print "Generating training dataset"
+    print "Generating training dataset from files at %s." % data_source
     train_dataset = pd.SupervisedDataSet(68, 2)
     valid_dataset = pd.ClassificationDataSet(68, 2)
 
@@ -83,12 +78,10 @@ def main():
 
     print("Training network on given data")
     trainer = BackpropTrainer(net, train_dataset)
-    epochs = 0
     train_error = 1.0
-    while epochs < 20:
+    while train_error > 0.05:
         train_error = trainer.train()
-        print "Epoch %d, Training error: %f" % epochs % train_error
-        epochs += 1
+        print "Training error: %f" % train_error
 
     # print "Training error: %f" % train_error
 
@@ -101,20 +94,10 @@ def main():
             valid_dataset.addSample(valid_data[index], is_interictal)
 
     print "Classifying validation data"
-    # output = np.round(np.concatenate(net.activateOnDataset(valid_dataset)))
-    output = net.activateOnDataset(valid_dataset)
-    num = len(output)
-    classif = np.zeros(nvalid)
-    for i in range(num):
-        # print i
-        if output[i, 0] > output[i, 1]:
-            classif[i] = 1
-
-        else:
-            classif[i] = 0
+    output = np.round(np.concatenate(net.activateOnDataset(valid_dataset)))
     labels = np.append(np.ones(5000), np.zeros(5000))
 
-    valid_error = (nvalid - sum(np.equal(classif, labels)))/float(nvalid)
+    valid_error = (nvalid - sum(np.equal(output, labels)))/float(nvalid)
     print "Validation error: %f" % valid_error
 
 
