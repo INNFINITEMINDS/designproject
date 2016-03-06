@@ -10,7 +10,7 @@ def nn_setup():
     # Create NN
     net = ps.FeedForwardNetwork()
 
-    inputLayer = ps.LinearLayer(68)
+    inputLayer = ps.LinearLayer(50)
     # hiddenLayer1 = WaveletLayer(10)
     hiddenLayer1 = ps.SigmoidLayer(10)
     hiddenLayer2 = ps.SigmoidLayer(20)
@@ -40,48 +40,48 @@ def nn_setup():
 
 
 def main():
-    data_source = "../clips/"
-
+    # data_source = "../clips/"
+    data_source = "../shared_dir/filtered_data/Patient_1/"
     num_channels = 68
     num_samples = 500
 
     print "Loading data files from files at %s" % data_source
-    ictal_files, interictal_files, test_files = load_all_patients(data_source)
+    ictal_files, interictal_files = load_freq_bands_for_patient(data_source)
 
     # Number of ictal OR interictal files. Total files will be num_files*2
     num_files = min(len(ictal_files), len(interictal_files))
 
     ictal_data = np.zeros((num_files, num_channels, num_samples))
     interictal_data = np.zeros((num_files, num_channels, num_samples))
-    ictal_channels
 
     for index in range(0, num_files):
-        ictal_data[index], ictal_freq, ictal_channels, ictal_latency = get_contents_at_index(ictal_files, index)
+        ictal_data[index] = ictal_files[index].get('filtered_data')
     for index in range(0, num_files):
-        interictal_data[index], interictal_freq, interictal_channels, interictal_latency = get_contents_at_index(
-            interictal_files, index)
+        interictal_data[index] = interictal_files[index].get('filtered_data')
 
-    nvalid = int(round(num_files / 3))
-    ntrain = num_files - nvalid
+    num_valid_files = int(round(num_files / 3))
+    num_train_files = num_files - num_valid_files
 
-    train_data = np.reshape(np.vstack([ictal_data[:ntrain, :, :], interictal_data[:ntrain, :, :]]),
-                            (ntrain * num_samples * 2, num_channels))
+    dim = num_samples / 50
+
+    train_data = np.reshape(np.vstack([ictal_data[:num_train_files, :, :], interictal_data[:num_train_files, :, :]]),
+                            (num_train_files * num_channels * dim * 2, 50))
     valid_data = np.reshape(
-        np.vstack([ictal_data[ntrain:ntrain + nvalid:, :, :], interictal_data[ntrain:ntrain + nvalid, :, :]]),
-        (nvalid * num_samples * 2, num_channels))
+        np.vstack([ictal_data[num_train_files:num_train_files + num_valid_files:, :, :], interictal_data[num_train_files:num_train_files + num_valid_files, :, :]]),
+        (num_valid_files * num_channels * dim * 2, 50))
+
+    nvalid = len(valid_data)
+    ntrain = len(train_data)
 
     print "Generating training dataset"
-    train_dataset = pd.SupervisedDataSet(num_channels, 2)
-    valid_dataset = pd.ClassificationDataSet(num_channels, 2)
+    train_dataset = pd.SupervisedDataSet(50, 2)
+    valid_dataset = pd.ClassificationDataSet(50, 2)
 
     is_ictal = [1, 0]
     is_interictal = [0, 1]
 
-    # ntrain *= 2
-    # nvalid *= 2
-
-    for index in range(ntrain*2):
-        if index < ntrain:
+    for index in range(ntrain):
+        if index < ntrain / 2:
             train_dataset.addSample(train_data[index], is_ictal)
         else:
             train_dataset.addSample(train_data[index], is_interictal)
@@ -92,7 +92,7 @@ def main():
     trainer = BackpropTrainer(net, train_dataset)
     epochs = 0
     train_error = 1.0
-    while epochs < 10:
+    while epochs < 1:
         train_error = trainer.train()
         print "Epoch %d, Training error: %f" % (epochs, train_error)
         epochs += 1
@@ -101,8 +101,8 @@ def main():
 
     print "Generating validation dataset"
 
-    for index in range(nvalid*2):
-        if index < nvalid:
+    for index in range(nvalid):
+        if index < nvalid / 2:
             valid_dataset.addSample(valid_data[index], is_ictal)
         else:
             valid_dataset.addSample(valid_data[index], is_interictal)
@@ -111,7 +111,7 @@ def main():
     # output = np.round(np.concatenate(net.activateOnDataset(valid_dataset)))
     output = net.activateOnDataset(valid_dataset)
     num = len(output)
-    classif = np.zeros(nvalid*2)
+    classif = np.zeros(nvalid)
     for i in range(num):
         # print i
         if output[i, 0] > output[i, 1]:
@@ -119,9 +119,9 @@ def main():
 
         else:
             classif[i] = 0
-    labels = np.append(np.ones(nvalid), np.zeros(nvalid))
+    labels = np.append(np.ones(nvalid / 2), np.zeros(nvalid - (nvalid / 2)))
 
-    valid_error = (nvalid*2 - sum(np.equal(classif, labels))) / float(nvalid*2)
+    valid_error = (nvalid - sum(np.equal(classif, labels))) / float(nvalid)
     print "Validation error: %f" % valid_error
 
 
