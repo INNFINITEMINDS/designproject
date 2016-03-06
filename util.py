@@ -41,6 +41,33 @@ def load_for_patient(patient_source):
     return ictal_contents, interictal_contents, test_contents
 
 
+def load_freq_bands_for_patient(patient_source):
+    # Read all file names
+    folders = os.listdir(patient_source)
+
+    freq_list = [folder for folder in folders]
+    ictal_contents = []
+    interictal_contents = []
+    for folder in freq_list:
+        folderpath = patient_source + folder
+        files = os.listdir(folderpath)
+
+        # Get ictal, interictal and test file names in the directory
+        ictal_mat_file_name = [file_name for file_name in files if '_ictal' in file_name]
+        interictal_mat_file_name = [file_name for file_name in files if '_interictal' in file_name]
+        # test_mat_file_name = [file_name for file_name in files if '_test' in file_name]
+
+        # Get matlab contents in mat files
+        ictal_contents = load_all_for_arr(folderpath, ictal_mat_file_name)
+        interictal_contents = load_all_for_arr(folderpath, interictal_mat_file_name)
+        # test_contents = load_all_for_arr(patient_source, test_mat_file_name)
+
+        # ictal_contents.extend(freq_ictal_contents)
+        # interictal_contents.extend(freq_interictal_contents)
+
+    return ictal_contents, interictal_contents
+
+
 def load_all_patients(src=clips_src):
     # TODO: save results for all patients.
 
@@ -67,5 +94,5 @@ def load_all_patients(src=clips_src):
 # TODO: Remove main block
 if __name__ == '__main__':
     # raw_input("Press enter to begin")
-    load_all_patients()
+    load_freq_bands_for_patient("../shared_dir/filtered_data/Patient_1/")
     raw_input("Press enter to finish")
