@@ -3,6 +3,8 @@ import pybrain.datasets as pd
 from pybrain.supervised.trainers import BackpropTrainer
 import numpy as np
 from util import *
+
+
 # from WaveletLayer import *
 
 
@@ -11,11 +13,10 @@ def nn_setup():
     net = ps.FeedForwardNetwork()
 
     inputLayer = ps.LinearLayer(50)
-    # hiddenLayer1 = WaveletLayer(10)
     hiddenLayer1 = ps.SigmoidLayer(10)
     hiddenLayer2 = ps.SigmoidLayer(20)
     hiddenLayer3 = ps.SigmoidLayer(10)
-    outputLayer = ps.SigmoidLayer(2)
+    outputLayer = ps.SigmoidLayer(1)
 
     input_to_hidden = ps.FullConnection(inputLayer, hiddenLayer1)
     hidden1_to_hidden2 = ps.FullConnection(hiddenLayer1, hiddenLayer2)
@@ -41,50 +42,66 @@ def nn_setup():
 
 def main():
     # data_source = "../clips/"
-    data_source = "../shared_dir/filtered_data/Patient_1/"
-    num_channels = 68
-    num_samples = 500
+    data_source = "../shared_dir/filtered_data/"
+    # num_channels = 68
+    # num_samples = 500
 
     print "Loading data files from files at %s" % data_source
-    ictal_files, interictal_files = load_freq_bands_for_patient(data_source)
+    # ictal_files, interictal_files = load_freq_bands_for_patient(data_source)
+    patient_data = load_all_freq_bands(data_source)
 
-    # Number of ictal OR interictal files. Total files will be num_files*2
-    num_files = min(len(ictal_files), len(interictal_files))
+    train_data = []
+    valid_data = []
+    train_labels = []
+    valid_labels = []
 
-    ictal_data = np.zeros((num_files, num_channels, num_samples))
-    interictal_data = np.zeros((num_files, num_channels, num_samples))
+    for patient in patient_data:
+        num_channels = patient[0]
+        num_samples = patient[1]
+        ictal_files = patient[2]
+        interictal_files = patient[3]
 
-    for index in range(0, num_files):
-        ictal_data[index] = ictal_files[index].get('filtered_data')
-    for index in range(0, num_files):
-        interictal_data[index] = interictal_files[index].get('filtered_data')
+        # Number of ictal OR interictal files. Total files will be num_files*2
+        num_files = min(len(ictal_files), len(interictal_files))
 
-    num_valid_files = int(round(num_files / 3))
-    num_train_files = num_files - num_valid_files
+        ictal_data = np.zeros((num_files, num_channels, num_samples))
+        interictal_data = np.zeros((num_files, num_channels, num_samples))
 
-    dim = num_samples / 50
+        for index in range(0, num_files):
+            ictal_data[index] = ictal_files[index].get('filtered_data')
+        for index in range(0, num_files):
+            interictal_data[index] = interictal_files[index].get('filtered_data')
 
-    train_data = np.reshape(np.vstack([ictal_data[:num_train_files, :, :], interictal_data[:num_train_files, :, :]]),
-                            (num_train_files * num_channels * dim * 2, 50))
-    valid_data = np.reshape(
-        np.vstack([ictal_data[num_train_files:num_train_files + num_valid_files:, :, :], interictal_data[num_train_files:num_train_files + num_valid_files, :, :]]),
-        (num_valid_files * num_channels * dim * 2, 50))
+        dim = (num_samples / 50) * num_channels * num_files
+
+        ictal_data = np.reshape(ictal_data, (dim, 50))
+        interictal_data = np.reshape(interictal_data, (dim, 50))
+        # num_valid_files = int(round(num_files / 3))
+        # num_train_files = num_files - num_valid_files
+        num_valid = int(round(num_files / 3))
+        num_train = num_files - num_valid
+
+        train_data.extend(np.vstack([ictal_data[:num_train], interictal_data[:num_train]]))
+        train_labels.extend(np.vstack([np.ones(num_train), np.zeros(num_train)]))
+        valid_data.extend(np.vstack([ictal_data[num_train:num_files], interictal_data[num_train:num_files]]))
+        valid_labels.extend(np.vstack([np.ones(num_valid), np.zeros(num_valid)]))
+        # train_data.extend(
+        #     np.reshape(np.vstack([ictal_data[:num_train_files, :, :], interictal_data[:num_train_files, :, :]]),
+        #                (num_train_files * num_channels * dim * 2, 50)))
+        # valid_data.extend(np.reshape(
+        #     np.vstack([ictal_data[num_train_files:num_train_files + num_valid_files:, :, :],
+        #                interictal_data[num_train_files:num_train_files + num_valid_files, :, :]]),
+        #     (num_valid_files * num_channels * dim * 2, 50)))
 
     nvalid = len(valid_data)
     ntrain = len(train_data)
 
     print "Generating training dataset"
-    train_dataset = pd.SupervisedDataSet(50, 2)
-    valid_dataset = pd.ClassificationDataSet(50, 2)
-
-    is_ictal = [1, 0]
-    is_interictal = [0, 1]
+    train_dataset = pd.SupervisedDataSet(50, 1)
+    valid_dataset = pd.ClassificationDataSet(50, 1)
 
     for index in range(ntrain):
-        if index < ntrain / 2:
-            train_dataset.addSample(train_data[index], is_ictal)
-        else:
-            train_dataset.addSample(train_data[index], is_interictal)
+        train_dataset.addSample(train_data[index], train_labels[index])
 
     net = nn_setup()
 
@@ -102,26 +119,23 @@ def main():
     print "Generating validation dataset"
 
     for index in range(nvalid):
-        if index < nvalid / 2:
-            valid_dataset.addSample(valid_data[index], is_ictal)
-        else:
-            valid_dataset.addSample(valid_data[index], is_interictal)
+        valid_dataset.addSample(valid_data[index], valid_labels[index])
 
     print "Classifying validation data"
     # output = np.round(np.concatenate(net.activateOnDataset(valid_dataset)))
     output = net.activateOnDataset(valid_dataset)
-    num = len(output)
-    classif = np.zeros(nvalid)
-    for i in range(num):
-        # print i
-        if output[i, 0] > output[i, 1]:
-            classif[i] = 1
+    # num = len(output)
+    # classif = np.zeros(nvalid)
+    # for i in range(num):
+    #     # print i
+    #     if output[i, 0] > output[i, 1]:
+    #         classif[i] = 1
+    #
+    #     else:
+    #         classif[i] = 0
+    # labels = np.append(np.ones(nvalid / 2), np.zeros(nvalid - (nvalid / 2)))
 
-        else:
-            classif[i] = 0
-    labels = np.append(np.ones(nvalid / 2), np.zeros(nvalid - (nvalid / 2)))
-
-    valid_error = (nvalid - sum(np.equal(classif, labels))) / float(nvalid)
+    valid_error = (nvalid - sum(np.equal(output, valid_labels))) / float(nvalid)
     print "Validation error: %f" % valid_error
 
 

@@ -55,15 +55,10 @@ def load_freq_bands_for_patient(patient_source):
         # Get ictal, interictal and test file names in the directory
         ictal_mat_file_name = [file_name for file_name in files if '_ictal' in file_name]
         interictal_mat_file_name = [file_name for file_name in files if '_interictal' in file_name]
-        # test_mat_file_name = [file_name for file_name in files if '_test' in file_name]
 
         # Get matlab contents in mat files
-        ictal_contents = load_all_for_arr(folderpath, ictal_mat_file_name)
-        interictal_contents = load_all_for_arr(folderpath, interictal_mat_file_name)
-        # test_contents = load_all_for_arr(patient_source, test_mat_file_name)
-
-        # ictal_contents.extend(freq_ictal_contents)
-        # interictal_contents.extend(freq_interictal_contents)
+        ictal_contents.extend(load_all_for_arr(folderpath, ictal_mat_file_name))
+        interictal_contents.extend(load_all_for_arr(folderpath, interictal_mat_file_name))
 
     return ictal_contents, interictal_contents
 
@@ -89,6 +84,41 @@ def load_all_patients(src=clips_src):
         # import pdb; pdb.set_trace();
 
     return ictal_contents, interictal_contents, test_contents
+
+
+def get_metadata_for_patient(patient_source):
+    files = os.listdir(patient_source)
+    patient_files = [file for file in files if file.startsWith('Patient_')]
+
+    if patient_files is not None:
+        matfile = sio.loadmat(patient_files[0])
+        frequency = matfile.get('freq')
+        channels = matfile.get('channels')
+        return frequency, channels
+
+    else:
+        return None, None
+
+
+def load_all_freq_bands(src):
+    # Get all folders inside filtered_data folder
+    folders = os.listdir(src)
+
+    # Filter folders starting with 'Patient'
+    patient_list = [folder for folder in folders if folder.startswith('Patient_')]
+
+    patient_data = []
+    i = 0
+
+    for folder in patient_list:
+        ictal_contents, interictal_contents = load_freq_bands_for_patient(folder)
+        channels = ictal_contents[0].get('channels')
+        freq = ictal_contents[0].get('freq')
+        patient = (channels, freq, ictal_contents, interictal_contents)
+        patient_data[i] = patient
+        i += 1
+
+    return patient_data
 
 
 # TODO: Remove main block
