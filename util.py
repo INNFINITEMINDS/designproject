@@ -111,12 +111,14 @@ def load_all_freq_bands(src):
     i = 0
 
     for folder in patient_list:
-        ictal_contents, interictal_contents = load_freq_bands_for_patient(folder)
-        channels = ictal_contents[0].get('channels')
+        print "Loading from %s%s" % (src, folder)
+        ictal_contents, interictal_contents = load_freq_bands_for_patient('%s%s/' % (src, folder))
         freq = ictal_contents[0].get('freq')
-        patient = (channels, freq, ictal_contents, interictal_contents)
-        patient_data[i] = patient
+        patient = (freq, ictal_contents, interictal_contents)
+        patient_data.append(patient)
         i += 1
+        if i == 2:
+            break
 
     return patient_data
 
