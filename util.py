@@ -86,8 +86,8 @@ def load_all_patients(src=clips_src):
         print 'Loading files from %s%s' % (src, folder)
         patient_data.append(load_for_patient('%s%s' % (src, folder)))
         i += 1
-        if i == 2:
-            break
+        # if i == 2:
+        #     break
 
     return patient_data
 
