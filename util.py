@@ -31,14 +31,15 @@ def load_for_patient(patient_source):
     # Get ictal, interictal and test file names in the directory
     ictal_mat_file_name = [file_name for file_name in files if '_ictal' in file_name]
     interictal_mat_file_name = [file_name for file_name in files if '_interictal' in file_name]
-    test_mat_file_name = [file_name for file_name in files if '_test' in file_name]
+    # test_mat_file_name = [file_name for file_name in files if '_test' in file_name]
 
     # Get matlab contents in mat files
     ictal_contents = load_all_for_arr(patient_source, ictal_mat_file_name)
     interictal_contents = load_all_for_arr(patient_source, interictal_mat_file_name)
-    test_contents = load_all_for_arr(patient_source, test_mat_file_name)
+    # test_contents = load_all_for_arr(patient_source, test_mat_file_name)
 
-    return ictal_contents, interictal_contents, test_contents
+    # return ictal_contents, interictal_contents, test_contents
+    return ictal_contents, interictal_contents
 
 
 def load_freq_bands_for_patient(patient_source):
@@ -72,18 +73,20 @@ def load_all_patients(src=clips_src):
     # Filter folders starting with 'Patient'
     names_list = [folder for folder in folders if folder.startswith('Patient_')]
 
-    ictal_contents = []
-    interictal_contents = []
-    test_contents = []
+    patient_data = []
+    i = 0
     # Run for each folder
     for folder in names_list:
-        temp_ictal, temp_interictal, temp_test = load_for_patient('%s%s' % (src, folder))
-        ictal_contents.extend(temp_ictal)
-        interictal_contents.extend(temp_interictal)
-        test_contents.extend(temp_test)
-        # import pdb; pdb.set_trace();
+        print 'Loading files from %s' % folder
+        ictal_contents, interictal_contents = load_for_patient('%s%s' % (src, folder))
+        freq = ictal_contents[0].get('freq')
+        patient = (freq, ictal_contents, interictal_contents)
+        patient_data.append(patient)
+        i += 1
+        if i == 2:
+            break
 
-    return ictal_contents, interictal_contents, test_contents
+    return patient_data
 
 
 def get_metadata_for_patient(patient_source):
@@ -117,8 +120,8 @@ def load_all_freq_bands(src):
         patient = (freq, ictal_contents, interictal_contents)
         patient_data.append(patient)
         i += 1
-        if i == 2:
-            break
+        # if i == 2:
+        #     break
 
     return patient_data
 
