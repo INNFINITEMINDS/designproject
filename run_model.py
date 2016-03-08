@@ -1,5 +1,5 @@
 from util import *
-import nn as nn
+import nn
 import numpy as np
 import sys
 
@@ -27,7 +27,7 @@ def generate_datasets(data_source):
 
     if "kaggle" in data_source:
         data_var = 'data'
-        patient_data = load_for_patient(data_source)
+        patient_data = load_all_patients(data_source)
     else:
         data_var = 'filtered_data'
         patient_data = load_all_freq_bands(data_source)

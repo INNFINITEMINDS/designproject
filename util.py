@@ -38,8 +38,10 @@ def load_for_patient(patient_source):
     interictal_contents = load_all_for_arr(patient_source, interictal_mat_file_name)
     # test_contents = load_all_for_arr(patient_source, test_mat_file_name)
 
+    freq = ictal_contents[0].get('freq')
+    patient = (freq, ictal_contents, interictal_contents)
     # return ictal_contents, interictal_contents, test_contents
-    return ictal_contents, interictal_contents
+    return patient
 
 
 def load_freq_bands_for_patient(patient_source):
@@ -61,7 +63,9 @@ def load_freq_bands_for_patient(patient_source):
         ictal_contents.extend(load_all_for_arr(folderpath, ictal_mat_file_name))
         interictal_contents.extend(load_all_for_arr(folderpath, interictal_mat_file_name))
 
-    return ictal_contents, interictal_contents
+    freq = ictal_contents[0].get('freq')
+    patient = (freq, ictal_contents, interictal_contents)
+    return patient
 
 
 def load_all_patients(src=clips_src):
@@ -77,11 +81,8 @@ def load_all_patients(src=clips_src):
     i = 0
     # Run for each folder
     for folder in names_list:
-        print 'Loading files from %s' % folder
-        ictal_contents, interictal_contents = load_for_patient('%s%s' % (src, folder))
-        freq = ictal_contents[0].get('freq')
-        patient = (freq, ictal_contents, interictal_contents)
-        patient_data.append(patient)
+        print 'Loading files from %s%s' % (src, folder)
+        patient_data.append(load_for_patient('%s%s' % (src, folder)))
         i += 1
         if i == 2:
             break
@@ -115,10 +116,7 @@ def load_all_freq_bands(src):
 
     for folder in patient_list:
         print "Loading from %s%s" % (src, folder)
-        ictal_contents, interictal_contents = load_freq_bands_for_patient('%s%s/' % (src, folder))
-        freq = ictal_contents[0].get('freq')
-        patient = (freq, ictal_contents, interictal_contents)
-        patient_data.append(patient)
+        patient_data.append(load_freq_bands_for_patient('%s%s/' % (src, folder)))
         i += 1
         # if i == 2:
         #     break
