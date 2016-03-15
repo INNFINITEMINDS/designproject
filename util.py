@@ -33,9 +33,11 @@ def load_for_patient(patient_source):
     interictal_mat_file_name = [file_name for file_name in files if '_interictal' in file_name]
     # test_mat_file_name = [file_name for file_name in files if '_test' in file_name]
 
+    minimum = min(len(ictal_mat_file_name), len(interictal_mat_file_name))
+
     # Get matlab contents in mat files
-    ictal_contents = load_all_for_arr(patient_source, ictal_mat_file_name)
-    interictal_contents = load_all_for_arr(patient_source, interictal_mat_file_name)
+    ictal_contents = load_all_for_arr(patient_source, ictal_mat_file_name[:minimum])
+    interictal_contents = load_all_for_arr(patient_source, interictal_mat_file_name[:minimum])
     # test_contents = load_all_for_arr(patient_source, test_mat_file_name)
 
     freq = ictal_contents[0].get('freq')
