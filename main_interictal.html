@@ -1,0 +1,206 @@
+
+<!doctype html>
+<html>
+<head>
+    <title> Home Monitoring of Epileptic patients</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">    
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <!--link type="text/css" rel="stylesheet" href="css/stylemain.css" /-->
+    <link href='https://fonts.googleapis.com/css?family=Raleway:100,200,300,400,500,600,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+    <style>
+        .home-bg{
+        background: #2c3e50; /* fallback for old browsers */
+        background: -webkit-linear-gradient(to bottom, #34495e , #2c3e50); /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(to bottom, #34495e , #2c3e50); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        text-align: center;
+        color: #ECF0F1;
+        font-family: 'Raleway', sans-serif;
+        font-size: xx-large;
+        font-weight: 100;
+          background-repeat: no-repeat;
+          background-attachment: fixed;
+        }
+        .container{
+            color:#F7F7F7;
+            margin: 0 auto;
+        }
+        .tagline{
+            margin-top:5%;
+            font-size:150%;
+        }
+        .title{
+            transition: all 1s ease;
+            font-size: 150%;
+            font-weight: 300;
+            border: medium solid;
+            margin-top: 10%;
+            padding-left: 20px;
+            padding-right:20px;
+            display: inline-block;
+        }
+        .title:hover{
+            background-color:#3C546D;
+        }
+
+        .selection{
+            margin-top: 5%;
+        }
+        .signin{
+            transition: all 0.2s ease;
+            margin-top:5%;
+            font-size:40%;
+            display:inline-block;
+        }
+        .signin:hover{
+            color:#f1c40f;
+        }
+        .btn {
+          cursor: pointer;
+          margin: 10px;
+          border-radius: 5px;
+          text-decoration: none;
+          padding: 10px;
+          transition: .3s;
+          -webkit-transition: .3s;
+          -moz-transition: .3s;
+          -o-transition: .3s;
+          display: inline-block;
+        }
+
+        .btn:hover {
+          cursor: url(http://cur.cursors-4u.net/symbols/sym-1/sym46.cur), auto;
+        }
+        .blue {
+          color: #55acee;
+          border: 2px #55acee solid;
+        }
+
+        .blue:hover {
+          background-color: #55acee;
+          color: #fff
+        }
+
+        .green {
+          color: #fff;
+          background-color: #2ecc71;
+        }
+
+        .green:hover {
+          color: #fff;
+          background-color: #2ecc71;
+        }
+
+        .red {
+          color: #B23232;
+          border: 2px #B23232 solid;
+        }
+
+        .red:hover {
+          color: #fff;
+          background-color: #B23232;
+        }
+
+        .purple {
+          color: #9b59b6;
+          border: 2px #9b59b6 solid;
+        }
+
+        .purple:hover {
+          color: #fff;
+          background-color: #9b59b6;
+        }
+
+        .orange {
+          color: #e67e22;
+          border: 2px #e67e22 solid;
+        }
+
+        .orange:hover {
+          color: #fff;
+          background-color: #e67e22;
+        }
+
+        .yellow {
+          color: #f1c40f;
+          border: 2px #f1c40f solid;
+        }
+
+        .yellow:hover {
+          color: #fff;
+          background-color: #f1c40f;
+        }
+
+        .buttons {
+          text-align: center;
+        }
+
+
+
+    </style>
+
+
+</head>
+
+
+
+<body class="home-bg">
+  
+	<div class="content">
+<!--
+       	<img src="wayk-hands-4-green-03.png" class="img-responsive center-block"  alt="Helping Hands Logo"style="padding-top:3vh;">
+        -->
+	<div class="title">
+        	<p> Home Monitoring of Epileptic patients </p>
+	</div>
+	<div class="tagline">
+	        <p>Capstone</p>
+    	</div>
+        <div class="selection">
+        	<p> Please select an option: </p>
+            <div class="buttons">
+                <!--a id="i_c"class="btn red" style="font-size:inherit" data-toggle="modal" data-target="#myModal_seizure" onclick="inputPassed(Yes)"><strong>Seizure</strong> </a>
+                <a id="ii_c"class="btn green" style="font-size:inherit" data-toggle="modal" data-target="#myModal_noseizure" onclick="inputPassed(No)"><strong>No Seizure</strong> </a--> <br>
+		        <a class = "btn red" href="/seizure/yes" id="ictal" style="font-size:inherit" > Seizure</a>
+                <a class = "btn green hover" href="/seizure/no" id = "interictal" style="font-size:inherit" > No Seizure</a>
+            </div> 
+        </div>
+    
+    </div>
+   
+    <script type="text/javascript">
+
+
+        function GetURLParameter(sParam)
+        {
+            var sPageURL = window.location.search.substring(1);
+            var sURLVariables = sPageURL.split('&');
+            for (var i = 0; i < sURLVariables.length; i++) 
+            {
+                var sParameterName = sURLVariables[i].split('=');
+                if (sParameterName[0] == sParam) 
+                {
+                    return sParameterName[1];
+                }
+            }
+        }​
+
+        var seizure = GetURLParameter('seizure');
+        if(seizure == 'yes') {
+            document.getElementById('i_c').innerHTML  = 'Changed';
+        } else if(seizure == 'no') {
+            document.getElementById('ii_c').style.backgroundColor = '#2ecc71';
+        }
+
+
+
+
+        
+    </script>
+
+
+</body>
+</html>
