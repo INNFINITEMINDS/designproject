@@ -1,61 +1,117 @@
 import thread
 import time
 from bottle import route, run, template
-from test_util_ import *
+import os
+import scipy.io as sio
+from nn import *
+import pickle
+from pybrain.tools.customxml.networkreader import NetworkReader
 
+testfile_path = "/u/d/rajgolik/Sublime Text 2/UX/ECE496/final_net/test_set.p"
+netfile_path = "/u/d/rajgolik/Sublime Text 2/UX/ECE496/final_net/final_last_bestnet_8.p"
+
+ictal_data = []
+ictal_labels = []
+interictal_data = []
+interictal_labels = []
 
 isSeizure = False
-switch = False
 
 # Define a function for the thread
 def print_is_seizure( threadName, delay):
-	count = 0
-	#loop to poll value of isSeizure every ~2 seconds and call network
-	while True:		
+	
+	net = NetworkReader.readFrom(netfile_path)
+
+	index = 0
+	length = 500
+	ictal_index = 0
+	interictal_index = 0
+	test_data = []
+	test_labels = []
+	global ictal_data, ictal_labels, interictal_data, interictal_labels
+
+	#loop to send 1 second (500 datapoints) worth of data to network
+	#continues to send until user toggles button
+	while True:	
 		time.sleep(delay)
 
-		# need some sort of synchronization mechanism here bet the thread in print_is_seizure
-		# and thread in test_my_nn. wait() and signal() ??
-		if switch:
-			thread.exit()
-
 		if isSeizure:			
-			print "%s: %s : seizure" % ( threadName, time.ctime(time.time()) )
-			test_my_nn("yes")
+			# print "%s: %s : seizure" % ( threadName, time.ctime(time.time()) )
+			if(ictal_index >= len(ictal_data)):
+				ictal_index = 0
+				index = 0
+				test_data = []
+				test_labels = []
+
+			length = 1 * 500
+			test_data.append(ictal_data[ictal_index:ictal_index+length])
+			test_labels.append(ictal_labels[ictal_index:ictal_index+length])
+			test_error, true_pos, true_neg, num_seizures = test_nn(net, test_data[index],test_labels[index])
+			ictal_index += length
+			index += 1
+
 		else:			
-			print "%s: %s : not seizure" % ( threadName, time.ctime(time.time()) )
-			test_my_nn("no")
+			# print "%s: %s : not seizure" % ( threadName, time.ctime(time.time()) )
+			if(interictal_index >= len(interictal_data)):
+				interictal_index = 0
+				index = 0
+				test_data = []
+				test_labels = []
 
-		# thread.exit()
-		# thread.start_new_thread( print_is_seizure, ("Thread-1", 0.5, ) )
-
+			length = 1 * 500
+			test_data.append(interictal_data[interictal_index:interictal_index+length])
+			test_labels.append(interictal_labels[interictal_index:interictal_index+length])
+			test_error, true_pos, true_neg, num_seizures = test_nn(net, test_data[index], test_labels[index])
+			interictal_index +=  length
+			index += 1 
+		print "Number of seizures detected: %d, Test error: %02f, True pos: %02f, True neg: %02f" % (num_seizures,test_error, true_pos, true_neg)
+	
 
 @route('/')
 def root():	
-	# return 'Welcome, go to /seizure/yes or /seizure/no to start this thing'
 	return template("main.html")
 
 
 @route('/seizure/:arg')
 def hello(arg):
-	global isSeizure, switch
+	global isSeizure
 
 	if arg == 'no':
 		isSeizure = False
-		switch = True
 		return template("main_interictal.html")		
 
 	else:
 		isSeizure = True	
-		switch = True	
 		return template("main_ictal.html")
 
+#split data before testing network
+def main():
+    testfile = open(testfile_path, 'rb+')
+
+    testdict = pickle.load(testfile)
+    inp_data = testdict['test_data']
+    inp_labels = testdict['test_labels']
+
+    data_index = len(inp_data) / 2
+    global ictal_data
+    ictal_data = inp_data[:data_index]
+    global interictal_data
+    interictal_data = inp_data[data_index:]
+
+    label_index = len(inp_data) / 2
+    global ictal_labels
+    ictal_labels = inp_labels[:label_index]
+    global interictal_labels
+    interictal_labels = inp_labels[label_index:]
+
+    return ictal_data, ictal_labels, interictal_data, interictal_labels
 
 
 if __name__ == "__main__":
-	# 
 	isSeizure = False	
-	thread.start_new_thread( print_is_seizure, ("Thread-1", 0.5, ) )
+	thread.start_new_thread( print_is_seizure, ("Thread-1", 0.3, ) )
+
+	# Load data
 	main()
 	print 'Spliced data'
 	run(host='localhost', port=8082)
