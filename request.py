@@ -3,7 +3,7 @@ import simplejson as json
 
 payload = {"to": "/topics/global",
            "data":
-               {"message": "test message"}
+               {"message": "Seizure Alert !!!"}
            }
 
 body = {}

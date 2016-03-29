@@ -7,8 +7,8 @@ from nn import *
 import pickle
 from pybrain.tools.customxml.networkreader import NetworkReader
 
-testfile_path = "/u/d/rajgolik/Sublime Text 2/UX/ECE496/final_net/test_set.p"
-netfile_path = "/u/d/rajgolik/Sublime Text 2/UX/ECE496/final_net/final_last_bestnet_8.p"
+testfile_path = "final_net/test_set.p"
+netfile_path = "final_net/final_last_bestnet_8.p"
 
 ictal_data = []
 ictal_labels = []
