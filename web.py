@@ -6,6 +6,7 @@ import scipy.io as sio
 from nn import *
 import pickle
 from pybrain.tools.customxml.networkreader import NetworkReader
+import socket
 
 testfile_path = "final_net/test_set.p"
 netfile_path = "final_net/final_last_bestnet_8.p"
@@ -108,15 +109,14 @@ def main():
 
 
 if __name__ == "__main__":
-	isSeizure = False	
-	thread.start_new_thread( print_is_seizure, ("Thread-1", 0.3, ) )
+	isSeizure = False
 
 	# Load data
 	main()
-	print 'Spliced data'
-	run(host='localhost', port=8082)
-	# print_time( "threadName", 5)
 
-# --> http://localhost:8080//seizure/yes
-# --> http://localhost:8080//seizure/no
-# --> http://localhost:8080/
+	thread.start_new_thread( print_is_seizure, ("Thread-1", 0.3, ) )
+
+	print 'Spliced data'
+	# run(host=socket.gethostbyname(socket.gethostname()), port=8082)
+	# run(host='localhost'), port=8082)
+	run(host=socket.gethostbyaddr(socket.gethostname())[0], port=8082)
