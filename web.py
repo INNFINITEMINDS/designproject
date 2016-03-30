@@ -7,6 +7,10 @@ from nn import *
 import pickle
 from pybrain.tools.customxml.networkreader import NetworkReader
 import socket
+import pickle
+
+from pylab import *
+ion()
 
 testfile_path = "final_net/test_set.p"
 netfile_path = "final_net/final_last_bestnet_8.p"
@@ -15,6 +19,9 @@ ictal_data = []
 ictal_labels = []
 interictal_data = []
 interictal_labels = []
+
+plot_y = []
+plot_x = []
 
 isSeizure = False
 
@@ -29,7 +36,7 @@ def print_is_seizure( threadName, delay):
 	interictal_index = 0
 	test_data = []
 	test_labels = []
-	global ictal_data, ictal_labels, interictal_data, interictal_labels
+	global ictal_data, ictal_labels, interictal_data, interictal_labels, plot_y, plot_x
 
 	#loop to send 1 second (500 datapoints) worth of data to network
 	#continues to send until user toggles button
@@ -45,8 +52,10 @@ def print_is_seizure( threadName, delay):
 				test_labels = []
 
 			length = 1 * 500
-			test_data.append(ictal_data[ictal_index:ictal_index+length])
-			test_labels.append(ictal_labels[ictal_index:ictal_index+length])
+			plot_x = ictal_data[ictal_index:ictal_index+length]
+			test_data.append(plot_x)
+			plot_y = ictal_labels[ictal_index:ictal_index+length]
+			test_labels.append(plot_y)
 			test_error, true_pos, true_neg, num_seizures = test_nn(net, test_data[index],test_labels[index])
 			ictal_index += length
 			index += 1
@@ -60,13 +69,27 @@ def print_is_seizure( threadName, delay):
 				test_labels = []
 
 			length = 1 * 500
-			test_data.append(interictal_data[interictal_index:interictal_index+length])
-			test_labels.append(interictal_labels[interictal_index:interictal_index+length])
+			plot_x = interictal_data[interictal_index:interictal_index+length]
+			test_data.append(plot_x)
+			plot_y = interictal_labels[interictal_index:interictal_index+length]
+			test_labels.append(plot_y)
 			test_error, true_pos, true_neg, num_seizures = test_nn(net, test_data[index], test_labels[index])
 			interictal_index +=  length
 			index += 1 
 		print "Number of seizures detected: %d, Test error: %02f, True pos: %02f, True neg: %02f" % (num_seizures,test_error, true_pos, true_neg)
+
+		s_data = {'x' : plot_x, 'y' : plot_y}
+		f = open('plot_data/data.p', 'wb')
+		pickle.dump(s_data, f)
+		f.close()
 	
+@route('/draw')
+def p_draw():
+	clf()
+	plot(range(0,len(plot_x)),plot_x / 10000)
+	ylim(ymin = -1000000000000000000, ymax = 1000000000000000000)
+	draw()
+	return 'check the plot in background'
 
 @route('/')
 def root():	
@@ -87,25 +110,28 @@ def hello(arg):
 
 #split data before testing network
 def main():
-    testfile = open(testfile_path, 'rb+')
+	global oldepoch
 
-    testdict = pickle.load(testfile)
-    inp_data = testdict['test_data']
-    inp_labels = testdict['test_labels']
+	oldepoch = int(round(time.time() * 1000))
+	testfile = open(testfile_path, 'rb+')
 
-    data_index = len(inp_data) / 2
-    global ictal_data
-    ictal_data = inp_data[:data_index]
-    global interictal_data
-    interictal_data = inp_data[data_index:]
+	testdict = pickle.load(testfile)
+	inp_data = testdict['test_data']
+	inp_labels = testdict['test_labels']
 
-    label_index = len(inp_data) / 2
-    global ictal_labels
-    ictal_labels = inp_labels[:label_index]
-    global interictal_labels
-    interictal_labels = inp_labels[label_index:]
+	data_index = len(inp_data) / 2
+	global ictal_data
+	ictal_data = inp_data[:data_index]
+	global interictal_data
+	interictal_data = inp_data[data_index:]
 
-    return ictal_data, ictal_labels, interictal_data, interictal_labels
+	label_index = len(inp_data) / 2
+	global ictal_labels
+	ictal_labels = inp_labels[:label_index]
+	global interictal_labels
+	interictal_labels = inp_labels[label_index:]
+
+	return ictal_data, ictal_labels, interictal_data, interictal_labels
 
 
 if __name__ == "__main__":
@@ -114,7 +140,7 @@ if __name__ == "__main__":
 	# Load data
 	main()
 
-	thread.start_new_thread( print_is_seizure, ("Thread-1", 0.3, ) )
+	thread.start_new_thread( print_is_seizure, ("Thread-1", 1, ) )
 
 	print 'Spliced data'
 	# run(host=socket.gethostbyname(socket.gethostname()), port=8082)
