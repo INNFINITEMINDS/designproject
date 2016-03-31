@@ -7,8 +7,6 @@ from nn import *
 import pickle
 from pybrain.tools.customxml.networkreader import NetworkReader
 import socket
-import pickle
-
 from pylab import *
 ion()
 
@@ -20,8 +18,8 @@ ictal_labels = []
 interictal_data = []
 interictal_labels = []
 
-plot_y = []
-plot_x = []
+plot_y = np.zeros(0)
+plot_x = np.linspace(0,0,500)
 
 isSeizure = False
 
@@ -77,17 +75,18 @@ def print_is_seizure( threadName, delay):
 			interictal_index +=  length
 			index += 1 
 		print "Number of seizures detected: %d, Test error: %02f, True pos: %02f, True neg: %02f" % (num_seizures,test_error, true_pos, true_neg)
-
-		s_data = {'x' : plot_x, 'y' : plot_y}
-		f = open('plot_data/data.p', 'wb')
-		pickle.dump(s_data, f)
-		f.close()
 	
 @route('/draw')
 def p_draw():
 	clf()
-	plot(range(0,len(plot_x)),plot_x / 10000)
+	# import pdb; pdb.set_trace()
+	# gcf().set_size_inches(10,10)
+
+	plot(np.linspace(0,1,500), plot_x / 5000)
 	ylim(ymin = -1000000000000000000, ymax = 1000000000000000000)
+	xlabel('Time')
+	ylabel('Signal')
+	title('Patient Clip')
 	draw()
 	return 'check the plot in background'
 
@@ -134,6 +133,10 @@ def main():
 	return ictal_data, ictal_labels, interictal_data, interictal_labels
 
 
+def run_app():
+	run(host=socket.gethostbyaddr(socket.gethostname())[0], port=8082)
+
+
 if __name__ == "__main__":
 	isSeizure = False
 
@@ -142,7 +145,9 @@ if __name__ == "__main__":
 
 	thread.start_new_thread( print_is_seizure, ("Thread-1", 1, ) )
 
-	print 'Spliced data'
-	# run(host=socket.gethostbyname(socket.gethostname()), port=8082)
-	# run(host='localhost'), port=8082)
-	run(host=socket.gethostbyaddr(socket.gethostname())[0], port=8082)
+	thread.start_new_thread( run_app, () )
+
+	while True:
+		p_draw()
+		time.sleep(1)
+	
