@@ -147,8 +147,15 @@ def test_nn(net, test_data, test_labels):
 
     # Calculate validation statistics
     test_error = (ntest - sum(np.equal(valid_output, test_labels))) / float(ntest)
-    true_pos = sum(np.logical_and(valid_output, test_labels)) / sum(test_labels)
-    true_neg = (ntest - sum(np.logical_xor(valid_output, test_labels)) - sum(
+    if sum(test_labels) == 0:
+        true_pos = 0
+    else:
+        true_pos = sum(np.logical_and(valid_output, test_labels)) / sum(test_labels)
+
+    if ntest - sum(test_labels) == 0:
+        true_neg = 0
+    else:
+        true_neg = (ntest - sum(np.logical_xor(valid_output, test_labels)) - sum(
         np.logical_and(valid_output, test_labels))) / (ntest - sum(test_labels))
 
     return test_error, true_pos, true_neg, num_seizures
