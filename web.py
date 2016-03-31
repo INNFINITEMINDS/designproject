@@ -147,6 +147,10 @@ if __name__ == "__main__":
 
 	thread.start_new_thread( run_app, () )
 
+	plot(np.linspace(0, 1, 500), plot_x / 5000)
+	import pdb;
+	pdb.set_trace();
+
 	while True:
 		p_draw()
 		time.sleep(1)
