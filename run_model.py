@@ -9,18 +9,18 @@ import pickle;
 import nn
 from features import *
 
+# Source directory for the training data
 default_src = "/home/divd/ece496/shared_dir/kaggle_data/training/"
+# File in which to store the trained network
 net_file_base = "/home/divd/ece496/nets/bestnet_"
+# File in which to store the results
 result_path = "/home/divd/ece496/nets/results.txt"
+# File for test cases
 testset_path = "/home/divd/ece496/nets/test_set.p"
 
 
 def main(data_source=default_src):
     train_data, train_labels, valid_data, valid_labels, test_data, test_labels = generate_datasets(data_source)
-    # train_data = np.random.rand(500, 16)
-    # train_labels = np.random.rand(500, 1)
-    # valid_data = np.random.rand(500, 16)
-    # valid_labels = np.random.rand(500, 1)
 
     net = nn.nn_setup()
 
@@ -61,7 +61,6 @@ def generate_datasets(data_source):
         datasize = int(round(freq / 10))
 
         for index in range(0, num_files):
-            # print "Processing file %d " % index
             ictal_channels = ictal_files[index].get(data_var)
             for channel in ictal_channels:
                 channel = ss.decimate(channel, datasize)
@@ -83,18 +82,7 @@ def generate_datasets(data_source):
     print "Generating datasets"
     num_datapts = len(ictal_data)
 
-    # train_data = []
-    # train_labels = []
-    #
-    # valid_data = []
-    # valid_labels = []
-    #
-    # test_data = []
-    # test_labels = []
-
-    # seed = np.random.get_state()
     np.random.shuffle(ictal_data)
-    # np.random.set_state(seed)
     np.random.shuffle(interictal_data)
 
     num_test = int(round(num_datapts / 5))
